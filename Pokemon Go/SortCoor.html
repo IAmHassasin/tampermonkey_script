@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tìm Tọa Độ Gần Nhất</title>
+    <script>
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Bán kính Trái Đất tính bằng km
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLon = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const distance = R * c; // Khoảng cách tính bằng km
+            return distance;
+        }
+
+        function findClosestCoordinate() {
+            const coordinatesList = document.getElementById("coordinatesList").value.trim().split("\n");
+            const inputCoordinate = document.getElementById("inputCoordinate").value.trim().split(",");
+            const inputLat = parseFloat(inputCoordinate[0]);
+            const inputLon = parseFloat(inputCoordinate[1]);
+
+            let storedCoordinates = JSON.parse(localStorage.getItem("enteredCoordinates")) || [];
+            const inputCoordString = `${inputLat},${inputLon}`;
+            if (!storedCoordinates.includes(inputCoordString)) {
+                storedCoordinates.push(inputCoordString);
+                localStorage.setItem("enteredCoordinates", JSON.stringify(storedCoordinates));
+            }
+
+            let closestCoord = null;
+            let minDistance = Infinity;
+
+            coordinatesList.forEach(coord => {
+                const parts = coord.trim().split(",");
+                const lat = parseFloat(parts[0]);
+                const lon = parseFloat(parts[1]);
+
+                if (storedCoordinates.includes(`${lat},${lon}`)) return; // Bỏ qua tọa độ đã nhập trước đó
+
+                const distance = calculateDistance(inputLat, inputLon, lat, lon);
+
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    closestCoord = coord;
+                }
+            });
+
+            document.getElementById("result").innerText = "Tọa độ gần nhất: " + closestCoord + " (Khoảng cách: " + minDistance.toFixed(2) + " km)";
+        }
+
+        function clearHistory() {
+            localStorage.removeItem("enteredCoordinates");
+            document.getElementById("result").innerText = "Lịch sử tọa độ đã nhập được xóa.";
+        }
+    </script>
+</head>
+<body>
+    <h1>Tìm Tọa Độ Gần Nhất</h1>
+    <textarea id="coordinatesList" rows="10" cols="30">
+1.363454,103.769644
+1.374057,103.774615
+1.386416,103.773899
+    </textarea><br>
+    <label for="inputCoordinate">Nhập tọa độ: </label>
+    <input type="text" id="inputCoordinate" placeholder="vd: 1.3800,103.7800"><br><br>
+    <button onclick="findClosestCoordinate()">Áp dụng</button>
+    <button onclick="clearHistory()">Xóa lịch sử tọa độ đã nhập</button>
+    <p id="result"></p>
+</body>
+</html>
